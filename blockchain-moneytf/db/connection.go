@@ -10,10 +10,13 @@ import (
 )
 
 func Connect() *pgx.Conn {
-	err:=godotenv.Load()
-	if err != nil {
-		log.Fatalf("Error loading.env file")
+	if os.Getenv("RAILWAY_ENVIRONMENT")==""{
+		err:=godotenv.Load()
+		if err != nil {
+			log.Fatalf("No .env file found, proceeding with environment variables")
+		}
 	}
+	
 	databaseURL:=os.Getenv("DATABASE_URL")
 	if databaseURL==""{
 		log.Fatal("DATABASE_URL is not set in the environment")
