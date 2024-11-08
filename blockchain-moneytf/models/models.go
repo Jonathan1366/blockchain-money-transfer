@@ -13,7 +13,7 @@ type Transaction struct {
 	SenderID        int     `json:"sender_id"`
 	ReceiverID      int     `json:"receiver_id"`
 	Amount          float64 `json:"amount"`
-	Signature       string  `json:"signature`
+	Signature       string  `json:"signature"`
 	TransactionHash string  `json:"transaction_hash"`
 	Waktu           string  `json:"waktu"`
 }
