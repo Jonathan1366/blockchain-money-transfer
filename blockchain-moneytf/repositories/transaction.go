@@ -16,9 +16,7 @@ func CreateTransaction(ctx context.Context, transaction *models.Transaction) err
 
 func CreateBlock(ctx context.Context, block *models.Block) error {
 	conn := db.Connect()
-	_, err := conn.Exec(ctx, `
-		INSERT INTO blocks (transaction_id, previous_hash, hash, nonce, timestamp) 
-		VALUES ($1, $2, $3, $4, $5)`,
+	_, err := conn.Exec(ctx, `INSERT INTO blocks (transaction_id, previous_hash, hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5)`,
 		block.TransactionId, block.PreviousHash, block.Hash, block.Nonce, block.Timestamp)
 	return err
 }
@@ -26,8 +24,7 @@ func CreateBlock(ctx context.Context, block *models.Block) error {
 func GetUserByID(ctx context.Context, id int) (*models.User, error) {
 	conn := db.Connect()
 	user := &models.User{}
-	err := conn.QueryRow(ctx, `
-		SELECT id, name, balance, public_key, private_key FROM users WHERE id = $1`,
+	err := conn.QueryRow(ctx, `SELECT id, name, balance, public_key, private_key FROM users WHERE id = $1`,
 		id).Scan(&user.ID, &user.Name, &user.Balance, &user.PublicKey, &user.PrivateKey)
 	if err != nil {
 		return nil, err
