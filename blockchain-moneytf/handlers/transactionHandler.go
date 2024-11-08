@@ -8,7 +8,6 @@ import (
 
 	// "github.com/Jonathan1366/blockchain-money-transfer/models"
 	"github.com/Jonathan1366/blockchain-money-transfer/models"
-	modelss "github.com/Jonathan1366/blockchain-money-transfer/models"
 	"github.com/Jonathan1366/blockchain-money-transfer/repositories"
 	"github.com/Jonathan1366/blockchain-money-transfer/utils"
 	"github.com/gofiber/fiber/v2"
@@ -26,7 +25,7 @@ func InitialTransaction(db *pgxpool.Pool) *AuthHandlers{
 }
 
 func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
-	transaction:= new(modelss.Transaction)
+	transaction:= new(models.Transaction)
 	if err:= c.BodyParser(transaction); err!=nil{
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
 			"error":"Cannot parse JSON",
