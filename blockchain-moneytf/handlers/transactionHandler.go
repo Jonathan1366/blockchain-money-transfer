@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"fmt"
+	"log"
 	"strconv"
 	"time"
 
@@ -34,11 +35,11 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 
 	sender, err := repositories.GetUserByID(context.Background(), transaction.SenderID)
 	if err != nil {
+		log.Printf("Sender not found: ID %d", transaction.SenderID)
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Sender not found"})
 	}
 
 	transaction.Signature = utils.SignTransaction(sender.PrivateKey, fmt.Sprintf("%d%d%f", transaction.SenderID, transaction.ReceiverID, transaction.Amount))
-
 	//buat hash dari transaksi misalnya sender_id + reciever_id+amount+ timestamp
 	transaction.Waktu = time.Now().Format(time.RFC3339)
 	transaction.TransactionHash= utils.GenerateHash(fmt.Sprintf("%d%d%f%s", transaction.SenderID, transaction.ReceiverID, transaction.Amount, transaction.Waktu) )
@@ -51,8 +52,13 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	}	
 
 	// Mining a new block
-	lastBlock, _ := repositories.GetlastBlock(context.Background())
-
+	lastBlock, err := repositories.GetlastBlock(context.Background())
+	if err != nil {
+		log.Printf("Failed to retrieve last block: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to retrieve last block",
+		})
+	}
 	//buat block baru
 	newBlock := models.Block{
 		TransactionId: transaction.ID,
@@ -61,9 +67,18 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	}
 
 	utils.MineBlock(&newBlock, 4) // Mining with difficulty 4
-	repositories.CreateBlock(context.Background(), &newBlock)
-
-	return c.JSON(fiber.Map{"status":"success", "transaction":transaction, "block": newBlock, "public_key":sender.PublicKey})
+	if err := repositories.CreateBlock(context.Background(), &newBlock); err != nil {
+		log.Printf("Failed to create block: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error": "Failed to create block",
+		})
+	}
+	return c.JSON(fiber.Map{
+		"status":"success",
+		"transaction":transaction,
+		"block": newBlock,
+		"public_key":sender.PublicKey,
+	})
 }
 
 func (h *AuthHandlers) GetTransactionHandler(c *fiber.Ctx) error  {
