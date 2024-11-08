@@ -21,7 +21,7 @@ type Transaction struct {
 type Block struct {
 	Id            int    `json:"id"`
 	TransactionId int    `json:"transaction_id"`
-	PreviousHash  string `json:"previoush_hash"`
+	PreviousHash  string `json:"previous_hash"`
 	Hash          string `json:"hash"`
 	Nonce         int    `json:"nonce"`
 	Timestamp     string `json:"timestamp"`
