@@ -6,7 +6,7 @@ import (
 )
 
 func SetupRoutes(app *fiber.App, authhandler *handlers.AuthHandlers) {
-	app.Get("/", func(c *fiber.Ctx) error {
+	app.Get("", func(c *fiber.Ctx) error {
 		return c.SendString(fiber.ErrForbidden.Message)
 	})
 	api:=app.Group("api")
