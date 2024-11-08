@@ -53,15 +53,18 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 
 	// Mining a new block
 	lastBlock, _ := repositories.GetlastBlock(context.Background())
+
+	//buat block baru
 	newBlock := models.Block{
 		TransactionId: transaction.ID,
 		PreviousHash:  lastBlock.Hash,
 		Timestamp:     transaction.Waktu,
 	}
+
 	utils.MineBlock(&newBlock, 4) // Mining with difficulty 4
 	repositories.CreateBlock(context.Background(), &newBlock)
 
-	return c.JSON(fiber.Map{"status":"success", "transaction":transaction, "block": newBlock})
+	return c.JSON(fiber.Map{"status":"success", "transaction":transaction, "block": newBlock, "public_key":sender.PublicKey})
 }
 
 func (h *AuthHandlers) GetTransactionHandler(c *fiber.Ctx) error  {
@@ -78,9 +81,7 @@ func (h *AuthHandlers) GetTransactionHandler(c *fiber.Ctx) error  {
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
 			"error":"Transaction not found",
-		},
-	)
-	
+		})
 	}
 	return c.JSON(transaction)
 };
@@ -119,7 +120,7 @@ func (h *AuthHandlers) UpdateTransactionsHandler(c * fiber.Ctx) error {
 		
 	}
 	return c.JSON(fiber.Map{
-		"status":"success",
+		"status": "success",
 		"transaction": transaction,
 	})
 }
