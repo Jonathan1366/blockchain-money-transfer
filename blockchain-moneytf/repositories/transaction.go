@@ -9,7 +9,7 @@ import (
 
 func CreateTransaction(ctx context.Context, transaction *models.Transaction) error  {
 	conn:=db.Connect()
-	_, err:=conn.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, transaction_hash, timestamp) VALUES($1,$2,$3,$4, $5)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, transaction.TransactionHash, transaction.Timestamp)
+	_, err:=conn.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, transaction_hash, timestamp) VALUES($1,$2,$3,$4, $5)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, transaction.TransactionHash, transaction.Waktu)
 	return err
 }
 
@@ -23,7 +23,7 @@ func GetTransactionByID(ctx context.Context, id int)(*models.Transaction, error)
 		&transaction.ReceiverID,
 		&transaction.Amount,
 		&transaction.TransactionHash,
-		&transaction.Timestamp,
+		&transaction.Waktu,
 	)
 	if err != nil {
 		return nil, err
@@ -34,7 +34,7 @@ func GetTransactionByID(ctx context.Context, id int)(*models.Transaction, error)
 
 func GetAllTransactions(ctx context.Context)([]models.Transaction, error)  {
 	conn:= db.Connect()
-	rows, err:= conn.Query(ctx,"SELECT id, sender_id, reciever_id, amount, transaction_hash, timestamp from transaction")
+	rows, err:= conn.Query(ctx,"SELECT id, sender_id, receiver_id, amount, transaction_hash, waktu from transaction")
 	if err != nil {
 		return nil, err
 	}
@@ -50,7 +50,7 @@ func GetAllTransactions(ctx context.Context)([]models.Transaction, error)  {
 			&transaction.ReceiverID,
 			&transaction.Amount,
 			&transaction.TransactionHash,
-			&transaction.Timestamp,
+			&transaction.Waktu,
 		)
 		if err != nil {
 			return nil, err
@@ -67,7 +67,7 @@ func UpdateTransaction(ctx context.Context, id int, transaction *models.Transact
 		transaction.ReceiverID,
 		transaction.Amount,
 		transaction.TransactionHash,
-		transaction.Timestamp,
+		transaction.Waktu,
 		id,
 	)
 	return err

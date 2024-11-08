@@ -33,8 +33,8 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	}
 
 	//buat hash dari transaksi misalnya sender_id + reciever_id+amount+ timestamp
-	transaction.Timestamp = time.Now().Format(time.RFC3339)
-	transaction.TransactionHash= utils.GenerateHash(fmt.Sprintf("%d%d%f%s", transaction.SenderID, transaction.ReceiverID, transaction.Amount, transaction.Timestamp) )
+	transaction.Waktu = time.Now().Format(time.RFC3339)
+	transaction.TransactionHash= utils.GenerateHash(fmt.Sprintf("%d%d%f%s", transaction.SenderID, transaction.ReceiverID, transaction.Amount, transaction.Waktu) )
 
 	//simpan transaksi ke db
 	if err:= repositories.CreateTransaction(context.Background(), transaction); err!=nil{
