@@ -6,7 +6,7 @@ import (
 	"strconv"
 	"time"
 
-	"github.com/Jonathan1366/blockchain-money-transfer/models"
+	// "github.com/Jonathan1366/blockchain-money-transfer/models"
 	modelss "github.com/Jonathan1366/blockchain-money-transfer/models"
 	"github.com/Jonathan1366/blockchain-money-transfer/repositories"
 	"github.com/Jonathan1366/blockchain-money-transfer/utils"
@@ -88,7 +88,7 @@ func (h *AuthHandlers) UpdateTransactionsHandler(c * fiber.Ctx) error {
 			"error": "invalid id format",
 		})
 	}
-	transaction:= new(models.Transaction)
+	transaction:= new(modelss.Transaction)
 	if err:= c.BodyParser(transaction); err!=nil {
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"error":"cannot parse JSON",

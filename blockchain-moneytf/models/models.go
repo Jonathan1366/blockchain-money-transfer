@@ -12,7 +12,7 @@ type Transaction struct {
 	ReceiverID      int     `json:"receiver_id"`
 	Amount          float64 `json:"amount"`
 	TransactionHash string  `json:"transaction_hash"`
-	Waktu       string  `json:"waktu"`
+	Waktu           string  `json:"waktu"`
 }
 
 type Block struct {
