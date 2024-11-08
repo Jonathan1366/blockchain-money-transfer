@@ -9,8 +9,46 @@ import (
 
 func CreateTransaction(ctx context.Context, transaction *models.Transaction) error  {
 	conn:=db.Connect()
-	_, err:=conn.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, transaction_hash, timestamp) VALUES($1,$2,$3,$4, $5)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, transaction.TransactionHash, transaction.Waktu)
+	_, err:=conn.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, timestamp) VALUES($1,$2,$3,$4, $5, $6)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
+	transaction.Signature, transaction.TransactionHash, transaction.Waktu)
 	return err
+}
+
+func CreateBlock(ctx context.Context, block *models.Block) error {
+	conn := db.Connect()
+	_, err := conn.Exec(ctx, `
+		INSERT INTO blocks (transaction_id, previous_hash, hash, nonce, timestamp) 
+		VALUES ($1, $2, $3, $4, $5)`,
+		block.TransactionId, block.PreviousHash, block.Hash, block.Nonce, block.Timestamp)
+	return err
+}
+
+func GetUserByID(ctx context.Context, id int) (*models.User, error) {
+	conn := db.Connect()
+	user := &models.User{}
+	err := conn.QueryRow(ctx, `
+		SELECT id, name, balance, public_key, private_key FROM users WHERE id = $1`,
+		id).Scan(&user.ID, &user.Name, &user.Balance, &user.PublicKey, &user.PrivateKey)
+	if err != nil {
+		return nil, err
+	}
+	return user, nil
+}
+
+func GetlastBlock(ctx context.Context) (*models.Block, error)  {
+	conn:=db.Connect()
+	block:=&models.Block{}
+
+	err:= conn.QueryRow(ctx, "SELECT id, transaction_id, previous_hash, hash, timestamp from blocks order by id desc limit 1").Scan(
+		&block.Id,
+		&block.TransactionId,
+		&block.PreviousHash,
+		&block.Hash,
+		&block.Timestamp,)
+		if err != nil {
+			return nil, err
+		}
+		return block, nil
 }
 
 func GetTransactionByID(ctx context.Context, id int)(*models.Transaction, error)  {
@@ -80,27 +118,7 @@ func DeleteTransaction(ctx context.Context, id int) error  {
 	return err
 }
 
-func GetlastBlock(ctx context.Context) (*models.Block, error)  {
-	conn:=db.Connect()
-	block:=&models.Block{}
 
-	err:= conn.QueryRow(ctx, "SELECT id, transaction_id, previous_hash, hash, timestamp from blocks order by id desc limit 1").Scan(
-		&block.Id,
-		&block.TransactionId,
-		&block.PreviousHash,
-		&block.Hash,
-		&block.Timestamp,)
-		if err != nil {
-			return nil, err
-		}
-		return block, nil
-}
-
-func CreateBlock(ctx context.Context, block *models.Block)error  {
-	conn:= db.Connect()
-	_, err:=conn.Exec(ctx, "INSERT INTO blocks (transaction_id, previous_hash, timestamp) VALUES ($1, $2, $3, $4)", block.TransactionId, block.PreviousHash, block.Hash, block.Timestamp)
-	return err
-}
 
 func GetAllBlocks(ctx context.Context) ([]models.Block, error)  {
 	conn:=db.Connect()
