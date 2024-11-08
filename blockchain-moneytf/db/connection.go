@@ -9,7 +9,7 @@ import (
 
 func Connect() *pgxpool.Pool {
 
-	databaseURL := "postgresql://postgres.ufzhvxdimzrqjuxlvdvx:[YOUR-PASSWORD]@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
+	databaseURL := "postgresql://postgres.ufzhvxdimzrqjuxlvdvx:tkym3fky12345@aws-0-ap-southeast-1.pooler.supabase.com:6543/postgres"
 	if databaseURL == "" {
 		log.Fatal("DATABASE_URL is not set in the environment")
 	}
