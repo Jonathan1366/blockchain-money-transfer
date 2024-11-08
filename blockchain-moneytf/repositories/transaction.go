@@ -24,7 +24,7 @@ func CreateBlock(ctx context.Context, block *models.Block) error {
 func GetUserByID(ctx context.Context, id int) (*models.User, error) {
 	conn := db.Connect()
 	user := &models.User{}
-	err := conn.QueryRow(ctx, `SELECT id, name, balance, public_eky, private_key FROM users WHERE id = $1`,
+	err := conn.QueryRow(ctx, `SELECT id, name, balance, public_key, private_key FROM users WHERE id = $1`,
 		id).Scan(&user.ID, &user.Name, &user.Balance, &user.PublicKey, &user.PrivateKey)
 	if err != nil {
 		return nil, err
