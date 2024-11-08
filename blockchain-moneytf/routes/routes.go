@@ -9,7 +9,7 @@ func SetupRoutes(app *fiber.App, authhandler *handlers.AuthHandlers) {
 	app.Get("/", func(c *fiber.Ctx) error {
 		return c.SendString(fiber.ErrForbidden.Message)
 	})
-	api:=app.Group("/api")
+	api:=app.Group("api")
 	api.Post("/transaction", authhandler.CreateTransactionHandler)
 	api.Get("/transaction/:id", authhandler.GetTransactionHandler)
 	api.Get("/transactions", authhandler.GetAllTransactionHandler)
