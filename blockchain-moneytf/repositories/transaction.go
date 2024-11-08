@@ -9,7 +9,7 @@ import (
 
 func CreateTransaction(ctx context.Context, transaction *models.Transaction) error  {
 	conn:=db.Connect()
-	_, err:=conn.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, timestamp) VALUES($1,$2,$3,$4, $5, $6)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
+	_, err:=conn.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, waktu) VALUES($1,$2,$3,$4, $5, $6)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
 	transaction.Signature, transaction.TransactionHash, transaction.Waktu)
 	return err
 }
@@ -55,7 +55,7 @@ func GetTransactionByID(ctx context.Context, id int)(*models.Transaction, error)
 	conn:=db.Connect()
 	transaction:= &models.Transaction{}
 
-	err:= conn.QueryRow(ctx, "SELECT id, sender_id, reciever_id, amount, transaction_hash, timestamp FROM transaction where id=$1", id).Scan(
+	err:= conn.QueryRow(ctx, "SELECT id, sender_id, reciever_id, amount, transaction_hash, waktu FROM transaction where id=$1", id).Scan(
 		&transaction.ID,
 		&transaction.SenderID,
 		&transaction.ReceiverID,
@@ -100,7 +100,7 @@ func GetAllTransactions(ctx context.Context)([]models.Transaction, error)  {
 
 func UpdateTransaction(ctx context.Context, id int, transaction *models.Transaction) error  {
 	conn:= db.Connect()
-	_, err:= conn.Exec(ctx, "UPDATE transaction SET sender_id=$1, receiver_id=$2, amount=$3, transaction_hash=$4, timestamp =$5 WHERE id=$6",
+	_, err:= conn.Exec(ctx, "UPDATE transaction SET sender_id=$1, receiver_id=$2, amount=$3, transaction_hash=$4, waktu =$5 WHERE id=$6",
 		transaction.SenderID,
 		transaction.ReceiverID,
 		transaction.Amount,
