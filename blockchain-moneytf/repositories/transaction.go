@@ -95,17 +95,30 @@ func GetAllTransactions(ctx context.Context)([]models.Transaction, error)  {
 	return transactions, nil
 }
 
-func UpdateTransaction(ctx context.Context, id int, transaction *models.Transaction) error  {
+func UpdateTransaction(ctx context.Context, SenderID int, transaction *models.Transaction) error  {
 	conn:= db.Connect()
-	_, err:= conn.Exec(ctx, "UPDATE transaction SET sender_id=$1, receiver_id=$2, amount=$3, transaction_hash=$4, waktu =$5 WHERE id=$6",
-		transaction.SenderID,
-		transaction.ReceiverID,
-		transaction.Amount,
-		transaction.TransactionHash,
-		transaction.Waktu,
-		id,
-	)
-	return err
+	tx, err:= conn.Begin(ctx)
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	// Update saldo sender
+	_, err = tx.Exec(ctx, `UPDATE users SET balance = balance - $1 WHERE id = $2`, transaction.Amount, SenderID)
+	if err != nil {
+			return err
+	}
+
+	// Update saldo receiver
+	_, err = tx.Exec(ctx, `UPDATE users SET balance = balance + $1 WHERE id = $2`, transaction.Amount, transaction.ReceiverID)
+	if err != nil {
+			return err
+	}
+	// Commit transaksi jika semua berhasil
+	if err := tx.Commit(ctx); err != nil {
+		return err
+}
+
+return nil
 }
 
 //fungsi utk menghapus transaksi berdasarkan id 

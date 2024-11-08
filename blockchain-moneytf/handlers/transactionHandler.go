@@ -33,11 +33,28 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 		})
 	}
 
-	sender, err := repositories.GetUserByID(context.Background(), transaction.SenderID)
-	if err != nil {
-		log.Printf("Sender not found: ID %d", transaction.SenderID)
-		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Sender not found"})
+		sender, err := repositories.GetUserByID(context.Background(), transaction.SenderID)
+		if err != nil {
+			log.Printf("Sender not found: ID %d", transaction.SenderID)
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Sender not found"})
+		}
+		receiver, err := repositories.GetUserByID(context.Background(), transaction.ReceiverID)
+		if err != nil {
+				log.Printf("Receiver not found: ID %d", transaction.ReceiverID)
+				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Receiver not found"})
+		}
+
+	if sender.Balance < transaction.Amount {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":"saldo tidak cukup",
+		})
 	}
+	
+	sender.Balance -= transaction.Amount
+
+	// Update saldo receiver
+	receiver.Balance += transaction.Amount
+
 
 	transaction.Signature = utils.SignTransaction(sender.PrivateKey, fmt.Sprintf("%d%d%f", transaction.SenderID, transaction.ReceiverID, transaction.Amount))
 	//buat hash dari transaksi misalnya sender_id + reciever_id+amount+ timestamp
@@ -50,6 +67,11 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			"error": "Failed to create transaction",
 		})
 	}	
+
+	if err := repositories.UpdateTransaction(context.Background(), transaction.SenderID, transaction ); err!=nil{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":"failed to update balances"})
+	}
 
 	// Mining a new block
 	lastBlock, err := repositories.GetlastBlock(context.Background())
