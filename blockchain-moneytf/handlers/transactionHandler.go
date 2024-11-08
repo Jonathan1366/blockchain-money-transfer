@@ -44,18 +44,29 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Receiver not found"})
 		}
 
-	if sender.Balance < transaction.Amount {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-			"error":"saldo tidak cukup",
-		})
-	}
+		if sender.Balance < transaction.Amount {
+			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+					"error": "saldo tidak cukup",
+			})
+	}	
 	
 	sender.Balance -= transaction.Amount
 
 	// Update saldo receiver
+
 	receiver.Balance += transaction.Amount
 
+	if err := repositories.UpdateBalance(context.Background(), sender.ID, sender.Balance); err != nil {
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": "Failed to update sender balance",
+			})
+	}	
 
+	if err := repositories.UpdateBalance(context.Background(), receiver.ID, receiver.Balance); err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error": "Failed to update receiver balance",
+		})
+}
 	transaction.Signature = utils.SignTransaction(sender.PrivateKey, fmt.Sprintf("%d%d%f", transaction.SenderID, transaction.ReceiverID, transaction.Amount))
 	//buat hash dari transaksi misalnya sender_id + reciever_id+amount+ timestamp
 	transaction.Waktu = time.Now().Format(time.RFC3339)
@@ -68,10 +79,10 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 		})
 	}	
 
-	if err := repositories.UpdateTransaction(context.Background(), transaction.SenderID, transaction ); err!=nil{
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error":"failed to update balances"})
-	}
+	// if err := repositories.UpdateTransaction(context.Background(), transaction.SenderID, transaction ); err!=nil{
+	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+	// 		"error":"failed to update balances"})
+	// }
 
 	// Mining a new block
 	lastBlock, err := repositories.GetlastBlock(context.Background())

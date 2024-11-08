@@ -11,7 +11,7 @@ func CreateTransaction(ctx context.Context, transaction *models.Transaction) err
 	conn:=db.Connect()
 	_, err:=conn.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, waktu) VALUES($1,$2,$3,$4, $5, $6)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
 	transaction.Signature, transaction.TransactionHash, transaction.Waktu)
-	return err
+	return err	
 }
 
 func CreateBlock(ctx context.Context, block *models.Block) error {
@@ -36,11 +36,12 @@ func GetlastBlock(ctx context.Context) (*models.Block, error)  {
 	conn:=db.Connect()
 	block:=&models.Block{}
 
-	err:= conn.QueryRow(ctx, "SELECT id, transaction_id, previous_hash, hash, timestamp from blocks order by id desc limit 1").Scan(
+	err:= conn.QueryRow(ctx, "SELECT id, transaction_id, previous_hash, hash, nonce, timestamp from blocks order by id desc limit 1").Scan(
 		&block.Id,
 		&block.TransactionId,
 		&block.PreviousHash,
 		&block.Hash,
+		&block.Nonce,
 		&block.Timestamp,)
 		if err != nil {
 			return nil, err
@@ -48,11 +49,18 @@ func GetlastBlock(ctx context.Context) (*models.Block, error)  {
 		return block, nil
 }
 
+func UpdateBalance(ctx context.Context, userID int, balance float64) error {
+	conn := db.Connect()
+	_, err := conn.Exec(ctx, `UPDATE users SET balance = $1 WHERE id = $2`, balance, userID)
+	return err
+}
+
+
 func GetTransactionByID(ctx context.Context, id int)(*models.Transaction, error)  {
 	conn:=db.Connect()
 	transaction:= &models.Transaction{}
 
-	err:= conn.QueryRow(ctx, "SELECT id, sender_id, reciever_id, amount, transaction_hash, waktu FROM transaction where id=$1", id).Scan(
+	err:= conn.QueryRow(ctx, "SELECT id, sender_id, receiver_id, amount, transaction_hash, waktu FROM transaction where id=$1", id).Scan(
 		&transaction.ID,
 		&transaction.SenderID,
 		&transaction.ReceiverID,
