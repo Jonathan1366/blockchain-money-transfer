@@ -13,6 +13,7 @@ func Connect() *pgxpool.Pool {
 	if databaseURL == "" {
 		log.Fatal("DATABASE_URL is not set in the environment")
 	}
+	
 
 	// Konfigurasi pool koneksi
 	config, err := pgxpool.ParseConfig(databaseURL)

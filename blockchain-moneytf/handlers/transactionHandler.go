@@ -52,8 +52,6 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	
 	sender.Balance -= transaction.Amount
 
-	// Update saldo receiver
-
 	receiver.Balance += transaction.Amount
 
 	if err := repositories.UpdateBalance(context.Background(), sender.ID, sender.Balance); err != nil {
@@ -82,37 +80,44 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	// if err := repositories.UpdateTransaction(context.Background(), transaction.SenderID, transaction ); err!=nil{
 	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 	// 		"error":"failed to update balances"})
-	// }
+	// }//buat block baru
+
 
 	// Mining a new block
 	lastBlock, err := repositories.GetlastBlock(context.Background())
 	if err != nil {
-		log.Printf("Failed to retrieve last block: %v", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to retrieve last block",
-		})
-	}
-	//buat block baru
-	newBlock := models.Block{
-		TransactionId: transaction.ID,
-		PreviousHash:  lastBlock.PreviousHash,
-		Timestamp:     transaction.Waktu,	
+		if err == pgx.ErrNoRows {
+			lastBlock = &models.Block{
+				Id: 0,
+				PreviousHash: "0",
+				Hash: "genesis_hash",
+				Timestamp: time.Now().Format(time.RFC3339),
+			}
+		}
+		} else{
+			log.Printf("Failed to retrieve new block: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+				"error":"fail to retrieve blocks",
+			})
+		}
+		newblock:= models.Block{
+			TransactionId: transaction.ID,
+			PreviousHash: lastBlock.Hash,
+			Timestamp: lastBlock.Timestamp,	
+		}
+		utils.MineBlock(&newblock, 4)
+		
+		if err := repositories.CreateBlock(context.Background(), &newblock); err != nil {
+			log.Printf("Failed to create block: %v", err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+					"error": "Failed to create block",
+			})
 	}
 
-	utils.MineBlock(&newBlock, 4) // Mining with difficulty 4
-	if err := repositories.CreateBlock(context.Background(), &newBlock); err != nil {
-		log.Printf("Failed to create block: %v", err)
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-			"error": "Failed to create block",
-		})
+	return c.JSON(fiber.Map{"status":"success", "transaction":transaction, "block": newblock, "public_key":sender.PublicKey})
 	}
-	return c.JSON(fiber.Map{
-		"status":"success",
-		"transaction":transaction,
-		"block": newBlock,
-		"public_key":sender.PublicKey,
-	})
-}
+
+	
 
 func (h *AuthHandlers) GetTransactionHandler(c *fiber.Ctx) error  {
 	idStr := c.Params("id")
