@@ -95,8 +95,8 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	//buat block baru
 	newBlock := models.Block{
 		TransactionId: transaction.ID,
-		PreviousHash:  lastBlock.Hash,
-		Timestamp:     transaction.Waktu,
+		PreviousHash:  lastBlock.PreviousHash,
+		Timestamp:     transaction.Waktu,	
 	}
 
 	utils.MineBlock(&newBlock, 4) // Mining with difficulty 4

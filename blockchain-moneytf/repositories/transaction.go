@@ -2,6 +2,7 @@ package repositories
 
 import (
 	"context"
+	"log"
 
 	"github.com/Jonathan1366/blockchain-money-transfer/db"
 	"github.com/Jonathan1366/blockchain-money-transfer/models"
@@ -16,10 +17,13 @@ func CreateTransaction(ctx context.Context, transaction *models.Transaction) err
 
 func CreateBlock(ctx context.Context, block *models.Block) error {
 	conn := db.Connect()
-	_, err := conn.Exec(ctx, `INSERT INTO blocks (transaction_id, previous_hash, hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5)`,
+	_, err := conn.Exec(ctx, `INSERT INTO blocks (transaction_id, hash, previous_hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5)`,
 		block.TransactionId, block.PreviousHash, block.Hash, block.Nonce, block.Timestamp)
+	if err != nil {
+		log.Fatalf("fail to create new blocks")
+	}
 	return err
-}
+		}
 
 func GetUserByID(ctx context.Context, id int) (*models.User, error) {
 	conn := db.Connect()
