@@ -7,7 +7,6 @@ import (
 	"strconv"
 	"time"
 
-	// "github.com/Jonathan1366/blockchain-money-transfer/models"
 	"github.com/Jonathan1366/blockchain-money-transfer/models"
 	"github.com/Jonathan1366/blockchain-money-transfer/repositories"
 	"github.com/Jonathan1366/blockchain-money-transfer/utils"
@@ -26,6 +25,7 @@ func InitialTransaction(db *pgxpool.Pool) *AuthHandlers{
 }
 
 func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
+
 	transaction:= new(models.Transaction)
 	if err:= c.BodyParser(transaction); err!=nil{
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
@@ -48,7 +48,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 					"error": "saldo tidak cukup",
 			})
-	}	
+		}	
 	
 	sender.Balance -= transaction.Amount
 
@@ -64,7 +64,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"error": "Failed to update receiver balance",
 		})
-}
+	}
 	transaction.Signature = utils.SignTransaction(sender.PrivateKey, fmt.Sprintf("%d%d%f", transaction.SenderID, transaction.ReceiverID, transaction.Amount))
 	//buat hash dari transaksi misalnya sender_id + reciever_id+amount+ timestamp
 	transaction.Waktu = time.Now().Format(time.RFC3339)
@@ -77,11 +77,6 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 		})
 	}	
 
-	// if err := repositories.UpdateTransaction(context.Background(), transaction.SenderID, transaction ); err!=nil{
-	// 	return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-	// 		"error":"failed to update balances"})
-	// }//buat block baru
-
 
 	// Mining a new block
 	lastBlock, err := repositories.GetlastBlock(context.Background())
@@ -92,8 +87,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 				PreviousHash: "0",
 				Hash: "genesis_hash",
 				Timestamp: time.Now().Format(time.RFC3339),
-			}
-		}
+			}}
 		} else{
 			log.Printf("Failed to retrieve new block: %v", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -111,11 +105,12 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			log.Printf("Failed to create block: %v", err)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"error": "Failed to create block",
-			})
+			}) 	
 	}
 
-	return c.JSON(fiber.Map{"status":"success", "transaction":transaction, "block": newblock, "public_key":sender.PublicKey})
-	}
+	return c.JSON(fiber.Map{"status":"success", "transaction":transaction, "block": newblock, "public_key":sender.PublicKey,
+	})
+}
 
 	
 
