@@ -29,40 +29,50 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	transaction:= new(models.Transaction)
 	if err:= c.BodyParser(transaction); err!=nil{
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error":"Cannot parse JSON",
+			"status": "error",
+			"code":400,
+			"message": "Cannot parse JSON",
 		})
 	}
 
-		sender, err := repositories.GetUserByID(context.Background(), transaction.SenderID)
-		if err != nil {
-			log.Printf("Sender not found: ID %d", transaction.SenderID)
-			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Sender not found"})
-		}
-		receiver, err := repositories.GetUserByID(context.Background(), transaction.ReceiverID)
-		if err != nil {
-				log.Printf("Receiver not found: ID %d", transaction.ReceiverID)
-				return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "Receiver not found"})
-		}
-
-		if sender.Balance < transaction.Amount {
-			return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
-					"error": "saldo tidak cukup",
-			})
-		}	
+	ctx:= context.Background()
+	sender, err := repositories.GetUserByID(ctx, transaction.SenderID)
+	if err != nil {
+		log.Printf("Sender not found: ID %d", transaction.SenderID)
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+			"status":"error",
+			"message": "Sender not found",
+		})
+	}
+	receiver, err := repositories.GetUserByID(ctx, transaction.ReceiverID)
+	if err != nil {
+			log.Printf("Receiver not found: ID %d", transaction.ReceiverID)
+			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
+				"status":"error",
+				"message": "Receiver not found"})
+	}
+	if sender.Balance < transaction.Amount {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+				"status":"error",
+				"message":"Insufficient balance",
+		})
+	}	
 	
 	sender.Balance -= transaction.Amount
-
 	receiver.Balance += transaction.Amount
 
 	if err := repositories.UpdateBalance(context.Background(), sender.ID, sender.Balance); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"error": "Failed to update sender balance",
+					"status": "error",
+					"message": "Failed to update sender balance",
+
 			})
 	}	
 
 	if err := repositories.UpdateBalance(context.Background(), receiver.ID, receiver.Balance); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error": "Failed to update receiver balance",
+				"status": "error",
+				"message": "Failed to update receiver balance",
 		})
 	}
 	transaction.Signature = utils.SignTransaction(sender.PrivateKey, fmt.Sprintf("%d%d%f", transaction.SenderID, transaction.ReceiverID, transaction.Amount))
@@ -73,46 +83,60 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	//simpan transaksi ke db
 	if err:= repositories.CreateTransaction(context.Background(), transaction); err!=nil{
 		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
-			"error": "Failed to create transaction",
+			"status": "error",
+			"message": "Failed to create transaction",
 		})
 	}	
 
-
-	// Mining a new block
-	lastBlock, err := repositories.GetlastBlock(context.Background())
-	if err != nil {
-		if err == pgx.ErrNoRows {
-			lastBlock = &models.Block{
-				Id: 0,
-				PreviousHash: "0",
-				Hash: "genesis_hash",
-				Timestamp: time.Now().Format(time.RFC3339),
-			}}
-		} else{
-			log.Printf("Failed to retrieve new block: %v", err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-				"error":"fail to retrieve blocks",
-			})
+	//using goroutine for mining block
+	go func (transactionID int)  {
+		ctx:= context.Background()
+		lastBlock, err:= repositories.GetlastBlock(ctx)
+		if err != nil {
+			if err== pgx.ErrNoRows{
+				lastBlock = &models.Block{
+					Id: 0,
+					PreviousHash: "0",
+					Hash: "genesis_hash",
+					Timestamp: time.Now().Format(time.RFC3339),
+				}
+			} else{
+				log.Printf("Failed to retrieve new block: %v",err)
+				return
+			}
+			
 		}
 		newblock:= models.Block{
-			TransactionId: transaction.ID,
+			TransactionId: transactionID,
 			PreviousHash: lastBlock.Hash,
-			Timestamp: lastBlock.Timestamp,	
+			Timestamp: time.Now().Format(time.RFC3339),
 		}
+
 		utils.MineBlock(&newblock, 4)
 		
-		if err := repositories.CreateBlock(context.Background(), &newblock); err != nil {
+		if err:= repositories.CreateBlock(ctx, &newblock); err!=nil{
 			log.Printf("Failed to create block: %v", err)
-			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
-					"error": "Failed to create block",
-			}) 	
-	}
+			return
+		}
 
-	return c.JSON(fiber.Map{"status":"success", "transaction":transaction, "block": newblock, "public_key":sender.PublicKey,
+		log.Printf("New Block mined successfully with ID: %v", newblock.Id)
+	} (transaction.ID)
+
+
+	return c.JSON(fiber.Map{
+		"status":"Success",
+		"message":"Transaction and block successfully created",
+		"data": fiber.Map{
+			"id":          transaction.ID,
+				"sender_id":   transaction.SenderID,
+				"receiver_id": transaction.ReceiverID,
+				"amount":      transaction.Amount,
+				"signature":   transaction.Signature,
+				"hash":        transaction.TransactionHash,
+				"time":        transaction.Waktu,
+			},
 	})
 }
-
-	
 
 func (h *AuthHandlers) GetTransactionHandler(c *fiber.Ctx) error  {
 	idStr := c.Params("id")
