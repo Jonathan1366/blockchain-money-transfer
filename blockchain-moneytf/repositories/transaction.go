@@ -19,7 +19,7 @@ func CreateTransaction(ctx context.Context, db *pgxpool.Pool, transaction *model
 }
 
 func CreateBlock(ctx context.Context, db*pgxpool.Pool , block *models.Block) error {
-	err := db.QueryRow(ctx, `INSERT INTO blocks (transaction_id, hash, previous_hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5) RETURNING id`, block.TransactionId, block.Hash, block.PreviousHash, block.Nonce, block.Timestamp).Scan(&block.Id)
+	err := db.QueryRow(ctx, `INSERT INTO blocks (transaction_id, hash, previous_hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5) RETURNING id`, block.TransactionId, block.Hash, block.Timestamp, block.PreviousHash,block.Nonce).Scan(&block.Id)
 	if err != nil {
 		log.Printf("fail to create new blocks: %v", err)
 	}

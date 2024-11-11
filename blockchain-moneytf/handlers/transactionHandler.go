@@ -81,7 +81,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	transaction.TransactionHash= utils.GenerateHash(fmt.Sprintf("%d%d%f%s", transaction.SenderID, transaction.ReceiverID, transaction.Amount, transaction.Waktu) )
 
 	//simpan transaksi ke db
-	if err:= repositories.CreateTransaction(ctx, h.DB, transaction); err!=nil{
+	if err:= repositories.CreateTransaction(ctx, h.DB, transaction); err!=nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status": "error",
 			"message": "Failed to create transaction",
@@ -92,9 +92,17 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	//using goroutine for mining block
 	go func (transactionID int) {
 		ctx:= context.Background()
+
+		if transactionID==0 {
+			log.Printf("Cannot mine block because transaction ID is zero")
+			return
+		}
+		log.Printf("Starting block mining for transaction ID: %d", transactionID)
+		
 		lastBlock, err:= repositories.GetlastBlock(ctx, h.DB)
 		if err != nil {
 			if err == pgx.ErrNoRows{
+				log.Printf("no previous block found, creating genesis block")
 				lastBlock = &models.Block{
 					Id: 0,
 					PreviousHash: "0",
@@ -105,7 +113,6 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 				log.Printf("Failed to retrieve new block: %v",err)
 				return
 			}
-			
 		}
 		newblock:= models.Block{
 			TransactionId: transactionID,
@@ -113,7 +120,9 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
 
-		utils.MineBlock(&newblock, 4)
+		log.Printf("Mining new block for transaction ID: %d", transactionID)
+    utils.MineBlock(&newblock, 4)
+    log.Printf("Finished mining block. New block hash: %s", newblock.Hash)
 		
 		if err:= repositories.CreateBlock(ctx, h.DB, &newblock); err!=nil{
 			log.Printf("Failed to create block: %v", err)
