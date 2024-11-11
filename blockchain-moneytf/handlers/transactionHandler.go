@@ -112,7 +112,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
 
-		utils.MineBlock(&newblock, 0)
+		utils.MineBlock(&newblock, 5)
 		
 		if err:= repositories.CreateBlock(ctx, h.DB, &newblock); err!=nil{
 			log.Printf("Failed to create block: %v", err)
