@@ -122,7 +122,6 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 		log.Printf("New Block mined successfully with ID: %v", newblock.Id)
 	} (transaction.ID)
 
-
 	return c.JSON(fiber.Map{
 		"status":"Success",
 		"message":"Transaction and block successfully created",
@@ -136,6 +135,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 				"time":        transaction.Waktu,
 			},
 	})
+	
 }
 
 func (h *AuthHandlers) GetTransactionHandler(c *fiber.Ctx) error  {
