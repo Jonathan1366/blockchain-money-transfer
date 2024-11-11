@@ -17,7 +17,6 @@ import (
 
 type AuthHandlers struct{
 	DB *pgxpool.Pool
-	DefaultQueryExecMode pgx.QueryExecMode
 }
 
 func InitialTransaction(db *pgxpool.Pool) *AuthHandlers{
@@ -28,7 +27,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 
 	transaction:= new(models.Transaction)
 	if err:= c.BodyParser(transaction); err!=nil{
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
 			"status": "error",
 			"code":400,
 			"message": "Cannot parse JSON",
@@ -36,7 +35,8 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	}
 
 	ctx:= context.Background()
-	sender, err := repositories.GetUserByID(ctx, transaction.SenderID)
+
+	sender, err := repositories.GetUserByID(ctx, h.DB, transaction.SenderID)
 	if err != nil {
 		log.Printf("Sender not found: ID %d", transaction.SenderID)
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -44,7 +44,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			"message": "Sender not found",
 		})
 	}
-	receiver, err := repositories.GetUserByID(ctx, transaction.ReceiverID)
+	receiver, err := repositories.GetUserByID(ctx, h.DB, transaction.ReceiverID)
 	if err != nil {
 			log.Printf("Receiver not found: ID %d", transaction.ReceiverID)
 			return c.Status(fiber.StatusNotFound).JSON(fiber.Map{
@@ -61,7 +61,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	sender.Balance -= transaction.Amount
 	receiver.Balance += transaction.Amount
 
-	if err := repositories.UpdateBalance(context.Background(), sender.ID, sender.Balance); err != nil {
+	if err := repositories.UpdateBalance(ctx, h.DB, sender.ID, sender.Balance	); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"status": "error",
 					"message": "Failed to update sender balance",
@@ -69,7 +69,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			})
 	}	
 
-	if err := repositories.UpdateBalance(context.Background(), receiver.ID, receiver.Balance); err != nil {
+	if err := repositories.UpdateBalance(ctx, h.DB, receiver.ID, receiver.Balance); err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 				"status": "error",
 				"message": "Failed to update receiver balance",
@@ -81,8 +81,8 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	transaction.TransactionHash= utils.GenerateHash(fmt.Sprintf("%d%d%f%s", transaction.SenderID, transaction.ReceiverID, transaction.Amount, transaction.Waktu) )
 
 	//simpan transaksi ke db
-	if err:= repositories.CreateTransaction(context.Background(), transaction); err!=nil{
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{
+	if err:= repositories.CreateTransaction(ctx, h.DB, transaction); err!=nil{
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 			"status": "error",
 			"message": "Failed to create transaction",
 		})
@@ -91,7 +91,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	//using goroutine for mining block
 	go func (transactionID int) {
 		ctx:= context.Background()
-		lastBlock, err:= repositories.GetlastBlock(ctx)
+		lastBlock, err:= repositories.GetlastBlock(ctx, h.DB)
 		if err != nil {
 			if err== pgx.ErrNoRows{
 				lastBlock = &models.Block{
@@ -114,7 +114,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 
 		utils.MineBlock(&newblock, 4)
 		
-		if err:= repositories.CreateBlock(ctx, &newblock); err!=nil{
+		if err:= repositories.CreateBlock(ctx, h.DB, &newblock); err!=nil{
 			log.Printf("Failed to create block: %v", err)
 			return
 		}

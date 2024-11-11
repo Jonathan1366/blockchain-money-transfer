@@ -6,29 +6,27 @@ import (
 
 	"github.com/Jonathan1366/blockchain-money-transfer/db"
 	"github.com/Jonathan1366/blockchain-money-transfer/models"
+	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func CreateTransaction(ctx context.Context, transaction *models.Transaction) error  {
-	conn:=db.Connect()
-	_, err:=conn.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, waktu) VALUES($1,$2,$3,$4, $5, $6)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
+func CreateTransaction(ctx context.Context, db*pgxpool.Pool,transaction *models.Transaction) error  {
+	_, err:=db.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, waktu) VALUES($1,$2,$3,$4, $5, $6)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
 	transaction.Signature, transaction.TransactionHash, transaction.Waktu)
 	return err	
 }
 
-func CreateBlock(ctx context.Context, block *models.Block) error {
-	conn := db.Connect()
-	_, err := conn.Exec(ctx, `INSERT INTO blocks (transaction_id, hash, previous_hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5)`,
+func CreateBlock(ctx context.Context, db*pgxpool.Pool , block *models.Block) error {
+	_, err := db.Exec(ctx, `INSERT INTO blocks (transaction_id, hash, previous_hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5)`,
 		block.TransactionId, block.Hash, block.PreviousHash, block.Nonce, block.Timestamp)
 	if err != nil {
-		log.Fatalf("fail to create new blocks")
+		log.Printf("fail to create new blocks")
 	}
 	return err
-		}
+}
 
-func GetUserByID(ctx context.Context, id int) (*models.User, error) {
-	conn := db.Connect()
+func GetUserByID(ctx context.Context, db*pgxpool.Pool, id int) (*models.User, error) {
 	user := &models.User{}
-	err := conn.QueryRow(ctx, `SELECT id, name, balance, public_key, private_key FROM users WHERE id = $1`,
+	err := db.QueryRow(ctx, `SELECT id, name, balance, public_key, private_key FROM users WHERE id = $1`,
 		id).Scan(&user.ID, &user.Name, &user.Balance, &user.PublicKey, &user.PrivateKey)
 	if err != nil {
 		return nil, err
@@ -36,11 +34,10 @@ func GetUserByID(ctx context.Context, id int) (*models.User, error) {
 	return user, nil
 }
 
-func GetlastBlock(ctx context.Context) (*models.Block, error)  {
-	conn:=db.Connect()
+func GetlastBlock(ctx context.Context, db*pgxpool.Pool) (*models.Block, error)  {
 	block:=&models.Block{}
 
-	err:= conn.QueryRow(ctx, "SELECT id, transaction_id, previous_hash, hash, nonce, timestamp from blocks order by id desc limit 1").Scan(
+	err:= db.QueryRow(ctx, "SELECT id, transaction_id, previous_hash, hash, nonce, timestamp from blocks order by id desc limit 1").Scan(
 		&block.Id,
 		&block.TransactionId,
 		&block.PreviousHash,
@@ -53,9 +50,8 @@ func GetlastBlock(ctx context.Context) (*models.Block, error)  {
 		return block, nil
 }
 
-func UpdateBalance(ctx context.Context, userID int, balance float64) error {
-	conn := db.Connect()
-	_, err := conn.Exec(ctx, `UPDATE users SET balance = $1 WHERE id = $2`, balance, userID)
+func UpdateBalance(ctx context.Context, db*pgxpool.Pool, userID int, balance float64) error {
+	_, err := db.Exec(ctx, `UPDATE users SET balance = $1 WHERE id = $2`, balance, userID)
 	return err
 }
 
