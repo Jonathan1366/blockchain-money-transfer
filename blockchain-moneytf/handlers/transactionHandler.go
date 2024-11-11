@@ -91,9 +91,11 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	//using goroutine for mining block
 	go func (transactionID int) {
 		ctx:= context.Background()
+		log.Printf("Trying to get the last block from the database")
 		lastBlock, err:= repositories.GetlastBlock(ctx, h.DB)
 		if err != nil {
-			if err== pgx.ErrNoRows{
+			if err == pgx.ErrNoRows{
+				log.Println("No exsisting blocks found, creating a genesis block.")
 				lastBlock = &models.Block{
 					Id: 0,
 					PreviousHash: "0",
@@ -108,10 +110,10 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 		}
 		newblock:= models.Block{
 			TransactionId: transactionID,
-			PreviousHash: lastBlock.Hash,
+			PreviousHash: lastBlock.Hash,	
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
-
+			
 		utils.MineBlock(&newblock, 4)
 		
 		if err:= repositories.CreateBlock(ctx, h.DB, &newblock); err!=nil{
@@ -135,7 +137,6 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 				"time":        transaction.Waktu,
 			},
 	})
-
 }
 
 func (h *AuthHandlers) GetTransactionHandler(c *fiber.Ctx) error  {
