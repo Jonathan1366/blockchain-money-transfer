@@ -10,7 +10,7 @@ import (
 )
 
 func CreateTransaction(ctx context.Context, db*pgxpool.Pool,transaction *models.Transaction) error  {
-	_, err:=db.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, waktu) VALUES($1,$2,$3,$4, $5, $6)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
+	_, err:=db.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, waktu) VALUES($1, $2, $3, $4, $5, $6)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
 	transaction.Signature, transaction.TransactionHash, transaction.Waktu)
 	return err	
 }
