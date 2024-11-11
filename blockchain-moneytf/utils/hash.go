@@ -15,10 +15,17 @@ func SignTransaction(privateKey, data string) string {
 
 // Simple proof-of-work mining function
 func MineBlock(block *models.Block, difficulty int) {
-	prefix := strings.Repeat("0", difficulty)
-	for !strings.HasPrefix(block.Hash, prefix) {
-		block.Nonce++
-		block.Hash = GenerateHash(fmt.Sprintf("%d%s%s%d", block.TransactionId, block.PreviousHash, block.Timestamp, block.Nonce))
+	target := strings.Repeat("0", difficulty)
+	nonce := 0
+
+	for{
+		block.Nonce = nonce
+		hash:= GenerateHash(fmt.Sprintf("%d%s%s%d", block.TransactionId, block.PreviousHash, block.Timestamp, block.Nonce))
+		if strings.HasPrefix(hash, target){
+			block.Hash=hash
+			break 
+		}
+		nonce++
 	}
 }
 

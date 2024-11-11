@@ -18,7 +18,7 @@ func CreateTransaction(ctx context.Context, transaction *models.Transaction) err
 func CreateBlock(ctx context.Context, block *models.Block) error {
 	conn := db.Connect()
 	_, err := conn.Exec(ctx, `INSERT INTO blocks (transaction_id, hash, previous_hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5)`,
-		block.TransactionId, block.PreviousHash, block.Hash, block.Nonce, block.Timestamp)
+		block.TransactionId, block.Hash, block.PreviousHash, block.Nonce, block.Timestamp)
 	if err != nil {
 		log.Fatalf("fail to create new blocks")
 	}

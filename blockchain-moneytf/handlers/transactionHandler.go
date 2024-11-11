@@ -89,7 +89,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	}	
 
 	//using goroutine for mining block
-	go func (transactionID int)  {
+	go func (transactionID int) {
 		ctx:= context.Background()
 		lastBlock, err:= repositories.GetlastBlock(ctx)
 		if err != nil {
