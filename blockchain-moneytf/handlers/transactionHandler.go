@@ -44,6 +44,7 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			"message": "Sender not found",
 		})
 	}
+
 	receiver, err := repositories.GetUserByID(ctx, h.DB, transaction.ReceiverID)
 	if err != nil {
 			log.Printf("Receiver not found: ID %d", transaction.ReceiverID)
@@ -65,7 +66,6 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
 					"status": "error",
 					"message": "Failed to update sender balance",
-
 			})
 	}	
 
@@ -87,15 +87,14 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			"message": "Failed to create transaction",
 		})
 	}	
-
+	fmt.Printf("Transaction ID: %d\n", transaction.ID)
+	
 	//using goroutine for mining block
 	go func (transactionID int) {
 		ctx:= context.Background()
-		log.Printf("Trying to get the last block from the database")
 		lastBlock, err:= repositories.GetlastBlock(ctx, h.DB)
 		if err != nil {
 			if err == pgx.ErrNoRows{
-				log.Println("No exsisting blocks found, creating a genesis block.")
 				lastBlock = &models.Block{
 					Id: 0,
 					PreviousHash: "0",
@@ -113,14 +112,13 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 			PreviousHash: lastBlock.Hash,	
 			Timestamp: time.Now().Format(time.RFC3339),
 		}
-			
+
 		utils.MineBlock(&newblock, 4)
 		
 		if err:= repositories.CreateBlock(ctx, h.DB, &newblock); err!=nil{
 			log.Printf("Failed to create block: %v", err)
 			return
 		}
-
 		log.Printf("New Block mined successfully with ID: %v", newblock.Id)
 	} (transaction.ID)
 

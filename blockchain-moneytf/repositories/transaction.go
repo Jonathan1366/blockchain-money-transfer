@@ -9,17 +9,19 @@ import (
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
-func CreateTransaction(ctx context.Context, db*pgxpool.Pool,transaction *models.Transaction) error  {
-	_, err:=db.Exec(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, waktu) VALUES($1, $2, $3, $4, $5, $6)", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
-	transaction.Signature, transaction.TransactionHash, transaction.Waktu)
-	return err	
+func CreateTransaction(ctx context.Context, db *pgxpool.Pool, transaction *models.Transaction) error  {
+	err := db.QueryRow(ctx,"INSERT INTO transaction (sender_id, receiver_id, amount, signature, transaction_hash, waktu) VALUES($1, $2, $3, $4, $5, $6) RETURNING id", transaction.SenderID, transaction.ReceiverID, transaction.Amount, 
+	transaction.Signature, transaction.TransactionHash, transaction.Waktu).Scan(&transaction.ID)
+	if err != nil {
+		log.Printf("Failed to create transaction: %v", err)
+	}	
+	return err
 }
 
 func CreateBlock(ctx context.Context, db*pgxpool.Pool , block *models.Block) error {
-	_, err := db.Exec(ctx, `INSERT INTO blocks (transaction_id, hash, previous_hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5)`,
-		block.TransactionId, block.Hash, block.PreviousHash, block.Nonce, block.Timestamp)
+	err := db.QueryRow(ctx, `INSERT INTO blocks (transaction_id, hash, previous_hash, nonce, timestamp) VALUES ($1, $2, $3, $4, $5) RETURNING id`, block.TransactionId, block.Hash, block.PreviousHash, block.Nonce, block.Timestamp).Scan(&block.Id)
 	if err != nil {
-		log.Printf("fail to create new blocks")
+		log.Printf("fail to create new blocks: %v", err)
 	}
 	return err
 }
