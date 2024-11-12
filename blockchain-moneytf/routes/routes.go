@@ -14,5 +14,13 @@ func SetupRoutes(app *fiber.App, authhandler *handlers.AuthHandlers) {
 	api.Get("/transactions", authhandler.GetAllTransactionHandler)
 	api.Put("/transaction/:id", authhandler.UpdateTransactionsHandler)
 	api.Delete("/transaction/:id", authhandler.DeleteTransactionHandler)
+
+	//endpoint block
 	api.Get("/blocks", authhandler.GetAllBlocksHandler)
+	
+	api.Get("/mempool", authhandler.GetMempoolHandler)
+
+	//endpoint mempool
+	api.Get("/mine", authhandler.MinePendingTransactionsHandler)
+	
 }

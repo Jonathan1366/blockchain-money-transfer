@@ -20,7 +20,7 @@ func MineBlock(block *models.Block, difficulty int) {
 
 	for{
 		block.Nonce = nonce
-		hash:= GenerateHash(fmt.Sprintf("%d%s%s%d", block.TransactionId, block.PreviousHash, block.Timestamp, block.Nonce))
+		hash:= GenerateHash(fmt.Sprintf("%d%s%s%d", block.Transaction, block.PreviousHash, block.Timestamp, block.Nonce))
 		if strings.HasPrefix(hash, target){
 			block.Hash=hash
 			break 
