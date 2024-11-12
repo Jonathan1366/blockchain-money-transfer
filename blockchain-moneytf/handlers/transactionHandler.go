@@ -24,7 +24,6 @@ func InitialTransaction(db *pgxpool.Pool) *AuthHandlers{
 }
 
 func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
-
 	transaction:= new(models.Transaction)
 	if err:= c.BodyParser(transaction); err!=nil{
 		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
@@ -92,6 +91,8 @@ func (h *AuthHandlers) CreateTransactionHandler(c *fiber.Ctx) error {
 	//using goroutine for mining block
 	go func (transactionID int) {
 		ctx:= context.Background()
+
+		time.Sleep(3*time.Second)
 
 		if transactionID==0 {
 			log.Printf("Cannot mine block because transaction ID is zero")
