@@ -24,5 +24,5 @@ type Block struct {
 	Hash         string        `json:"hash"`
 	Nonce        int           `json:"nonce"`
 	Timestamp    string        `json:"timestamp"`
-	Transaction  []Transaction `json:"transactions"`
+	Transactions  []Transaction `json:"transactions"`
 }

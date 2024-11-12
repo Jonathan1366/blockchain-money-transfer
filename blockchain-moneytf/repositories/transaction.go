@@ -21,7 +21,7 @@ func CreateTransaction(ctx context.Context, db *pgxpool.Pool, transaction *model
 }
 
 func CreateBlock(ctx context.Context, db *pgxpool.Pool , block *models.Block) error {
-	transactionJSON, err:= json.Marshal(block.Transaction)
+	transactionJSON, err:= json.Marshal(block.Transactions)
 	if err != nil {
 		log.Printf("failed to marshal transactions: %v", err)
 		return err
@@ -34,7 +34,6 @@ func CreateBlock(ctx context.Context, db *pgxpool.Pool , block *models.Block) er
 	
 }
 
-
 func GetUserByID(ctx context.Context, db*pgxpool.Pool, id int) (*models.User, error) {
 	user := &models.User{}
 	err := db.QueryRow(ctx, `SELECT id, name, balance, public_key, private_key FROM users WHERE id = $1`,
@@ -45,11 +44,9 @@ func GetUserByID(ctx context.Context, db*pgxpool.Pool, id int) (*models.User, er
 	return user, nil
 }
 
-
-
 func GetlastBlock(ctx context.Context, db*pgxpool.Pool) (*models.Block, error)  {
 	block:=&models.Block{}
-	var transactionJSON []byte
+	var transactionsJSON []byte
 
 	err:= db.QueryRow(ctx, "SELECT id, previous_hash, hash, nonce, timestamp, transactions from blocks order by id desc limit 1").Scan(
 		&block.Id,
@@ -57,12 +54,12 @@ func GetlastBlock(ctx context.Context, db*pgxpool.Pool) (*models.Block, error)  
 		&block.Hash,
 		&block.Nonce,
 		&block.Timestamp,
-		&block.Transaction,
+		&block.Transactions,
 	)
 		if err != nil {
 			return nil, err
 		}
-		err = json.Unmarshal(transactionJSON, &block.Transaction)
+		err = json.Unmarshal(transactionsJSON, &block.Transactions)
 		if err != nil {
 			return nil, err
 		}

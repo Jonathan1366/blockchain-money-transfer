@@ -152,10 +152,11 @@ func (h*AuthHandlers) MinePendingTransaction() error {
 			return err
 		}
 	}
+
 	newblock:=models.Block{
 		PreviousHash: lastBlock.Hash,
 		Timestamp: time.Now().Format(time.RFC3339),
-		Transaction: transactions,
+		Transactions: transactions,
 	}
 
 	utils.MineBlock(&newblock, 4)
