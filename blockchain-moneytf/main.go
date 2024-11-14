@@ -13,6 +13,10 @@ import (
 
 func main() {
 	app := fiber.New()
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:5173", // Specify the allowed origin
+		AllowHeaders: "Origin, Content-Type, Accept",
+	}))
 	database:=db.Connect()
 	authhandler:=handlers.InitialTransaction(database)
 	routes.SetupRoutes(app, authhandler)
@@ -23,14 +27,6 @@ func main() {
 	}
 	log.Fatal(app.Listen(":"+port ))
 
-	app.Use(cors.New(cors.Config{
-		AllowOrigins: "http://localhost:5173", // Specify the allowed origin
-		AllowHeaders: "Origin, Content-Type, Accept",
+	
 
-		
-}))
-	app.Get("/api/users/:id", func(c *fiber.Ctx) error {
-	// Handler code
-	return c.SendString("User info")
-})
 }
