@@ -12,6 +12,8 @@ func SetupRoutes(app *fiber.App, authhandler *handlers.AuthHandlers) {
 	api:=app.Group("api")
 	api.Post("/transaction", authhandler.CreateTransactionHandler)
 	api.Get("/transactions", authhandler.GetAllTransactionHandler)
+	api.Get("/users/:id", authhandler.GetUserByIDHandler)
+
 	api.Put("/transaction/:id", authhandler.UpdateTransactionsHandler)
 	api.Delete("/transaction/:id", authhandler.DeleteTransactionHandler)
 

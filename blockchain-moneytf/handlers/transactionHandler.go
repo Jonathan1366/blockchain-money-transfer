@@ -226,7 +226,7 @@ func (h *AuthHandlers) GetTransactionHandler(c *fiber.Ctx) error  {
 
 //handler utk mengambil semua transaksi
 
-func (h* AuthHandlers) GetAllTransactionHandler(c *fiber.Ctx) error  {
+func (h *AuthHandlers) GetAllTransactionHandler(c *fiber.Ctx) error  {
 	transactions, err := repositories.GetAllTransactions(context.Background())
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -234,6 +234,21 @@ func (h* AuthHandlers) GetAllTransactionHandler(c *fiber.Ctx) error  {
 		})
 	}
 	return c.JSON(transactions)
+}
+
+func (h *AuthHandlers) GetUserByIDHandler(c *fiber.Ctx) error  {
+	id, err:= strconv.Atoi(c.Params("id"))
+	if err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":"Invalid user id",
+		})
+	}
+	user, err := repositories.GetUserByID(context.Background(), h.DB, id)
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
+			"error":"User not found"})
+	}
+	return c.JSON(user)	
 }
 
 //handler utk memperbarui transaksi berdasarkan id
