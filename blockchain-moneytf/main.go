@@ -8,6 +8,7 @@ import (
 	"github.com/Jonathan1366/blockchain-money-transfer/handlers"
 	"github.com/Jonathan1366/blockchain-money-transfer/routes"
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/cors"
 )
 
 func main() {
@@ -21,4 +22,15 @@ func main() {
 		port ="3000"
 	}
 	log.Fatal(app.Listen(":"+port ))
+
+	app.Use(cors.New(cors.Config{
+		AllowOrigins: "http://localhost:5173", // Specify the allowed origin
+		AllowHeaders: "Origin, Content-Type, Accept",
+
+		
+}))
+	app.Get("/api/users/:id", func(c *fiber.Ctx) error {
+	// Handler code
+	return c.SendString("User info")
+})
 }
