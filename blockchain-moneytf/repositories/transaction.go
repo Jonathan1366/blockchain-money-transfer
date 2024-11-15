@@ -20,7 +20,7 @@ func CreateTransaction(ctx context.Context, db *pgxpool.Pool, transaction *model
 	return err
 }
 
-func CreateBlock(ctx context.Context, db *pgxpool.Pool , block *models.Block) error {
+func 	CreateBlock(ctx context.Context, db *pgxpool.Pool , block *models.Block) error {
 	transactionJSON, err:= json.Marshal(block.Transactions)
 	if err != nil {
 		log.Printf("failed to marshal transactions: %v", err)
