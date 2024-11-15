@@ -7,12 +7,11 @@ require (
 	github.com/jackc/pgx/v4 v4.18.3
 )
 
-require (
-	github.com/jackc/puddle v1.3.0 // indirect
-)
+require github.com/jackc/puddle v1.3.0 // indirect
 
 require (
 	github.com/andybalholm/brotli v1.1.1 // indirect
+	github.com/go-playground/locales v0.14.1
 	github.com/google/uuid v1.6.0 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
 	github.com/jackc/pgconn v1.14.3 // indirect

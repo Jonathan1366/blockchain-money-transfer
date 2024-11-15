@@ -7,6 +7,8 @@ import (
 
 	"github.com/Jonathan1366/blockchain-money-transfer/db"
 	"github.com/Jonathan1366/blockchain-money-transfer/models"
+
+	// `github.com/go-playground/locales/id`
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -48,7 +50,7 @@ func GetlastBlock(ctx context.Context, db*pgxpool.Pool) (*models.Block, error)  
 	block:=&models.Block{}
 	var transactionsJSON []byte
 
-	err:= db.QueryRow(ctx, "SELECT id, previous_hash, hash, nonce, timestamp, transactions from blocks order by id desc limit 1").Scan(
+	err:= db.QueryRow(ctx, "SELECT id, previous_hash, hash, nonce, timestamp, transactions from blocks  WHERE id = $1", block.Id).Scan(
 		&block.Id,
 		&block.PreviousHash,
 		&block.Hash,
