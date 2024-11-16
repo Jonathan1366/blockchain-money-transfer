@@ -2,13 +2,10 @@ package repositories
 
 import (
 	"context"
-	"encoding/json"
 	"log"
 
 	"github.com/Jonathan1366/blockchain-money-transfer/db"
 	"github.com/Jonathan1366/blockchain-money-transfer/models"
-
-	// `github.com/go-playground/locales/id`
 	"github.com/jackc/pgx/v4/pgxpool"
 )
 
@@ -22,19 +19,26 @@ func CreateTransaction(ctx context.Context, db *pgxpool.Pool, transaction *model
 	return err
 }
 
-func 	CreateBlock(ctx context.Context, db *pgxpool.Pool , block *models.Block) error {
-	transactionJSON, err:= json.Marshal(block.Transactions)
-	if err != nil {
-		log.Printf("failed to marshal transactions: %v", err)
-		return err
-	}
-	err = db.QueryRow(ctx, "INSERT INTO blocks (hash, previous_hash, nonce, timestamp, transactions) VALUES ($1, $2, $3, $4, $5) RETURNING id", block.Hash, block.PreviousHash, block.Nonce, block.Timestamp, transactionJSON).Scan(&block.Id)
-	if err != nil {
-		log.Printf("Failed to create new block: %v", err)
-	}
-	return err
+// func CreateBlock(ctx context.Context, db *pgxpool.Pool , block *models.Block) error {
+// 	transactionJSON, err:= json.Marshal(block.Transactions)
+// 	if err != nil {
+// 		log.Printf("failed to marshal transactions: %v", err)
+// 		return err
+// 	}
+// 	err = db.QueryRow(ctx, "INSERT INTO blocks (hash, previous_hash, nonce, timestamp, transactions) VALUES ($1, $2, $3, $4, $5) RETURNING id", block.Hash, block.PreviousHash, block.Nonce, block.Timestamp, transactionJSON).Scan(&block.Id)
+// 	if err != nil {
+// 		log.Printf("Failed to create new block: %v", err)
+// 	}
+// 	return err
 	
+// }
+
+func CreateBlock(ctx context.Context, db *pgxpool.Pool, block *models.Block) error {
+	query := `INSERT INTO blocks (id, previous_hash, hash, timestamp, nonce) VALUES ($1, $2, $3, $4, $5)`
+	_, err := db.Exec(ctx, query, block.Id, block.PreviousHash, block.Hash, block.Timestamp, block.Nonce)
+	return err
 }
+
 
 func GetUserByID(ctx context.Context, db*pgxpool.Pool, id int) (*models.User, error) {
 	user := &models.User{}
@@ -46,28 +50,40 @@ func GetUserByID(ctx context.Context, db*pgxpool.Pool, id int) (*models.User, er
 	return user, nil
 }
 
-func GetlastBlock(ctx context.Context, db*pgxpool.Pool) (*models.Block, error)  {
-	block:=&models.Block{}
-	var transactionsJSON []byte
+// func GetlastBlock(ctx context.Context, db*pgxpool.Pool) (*models.Block, error)  {
+// 	block:=&models.Block{}
+// 	var transactionsJSON []byte
 
-	err:= db.QueryRow(ctx, "SELECT id, previous_hash, hash, nonce, timestamp, transactions from blocks  WHERE id = $1", block.Id).Scan(
-		&block.Id,
-		&block.PreviousHash,
-		&block.Hash,
-		&block.Nonce,
-		&block.Timestamp,
-		&block.Transactions,
-	)
-		if err != nil {
-			return nil, err
-		}
-		err = json.Unmarshal(transactionsJSON, &block.Transactions)
-		if err != nil {
-			return nil, err
-		}
-		return block, nil
+// 	err:= db.QueryRow(ctx, "SELECT id, previous_hash, hash, nonce, timestamp, transactions from blocks  WHERE id = $1", block.Id).Scan(
+// 		&block.Id,
+// 		&block.PreviousHash,
+// 		&block.Hash,
+// 		&block.Nonce,
+// 		&block.Timestamp,
+// 		&block.Transactions,
+// 	)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		err = json.Unmarshal(transactionsJSON, &block.Transactions)
+// 		if err != nil {
+// 			return nil, err
+// 		}
+// 		return block, nil
 
+// }
+
+func GetlastBlock(ctx context.Context, db *pgxpool.Pool) (*models.Block, error) {
+	query := `SELECT id, previous_hash, hash, timestamp, nonce FROM blocks ORDER BY id DESC LIMIT 1`
+	row := db.QueryRow(ctx, query)
+
+	var block models.Block
+	if err := row.Scan(&block.Id, &block.PreviousHash, &block.Hash, &block.Timestamp, &block.Nonce); err != nil {
+			return nil, err
+	}
+	return &block, nil
 }
+
 
 func UpdateBalance(ctx context.Context, db*pgxpool.Pool, userID int, balance float64) error {
 	_, err := db.Exec(ctx, `UPDATE users SET balance = $1 WHERE id = $2`, balance, userID)
